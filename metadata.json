@@ -1,0 +1,25 @@
+{
+  "name": "Onvervreemdbaar - RechtenQuiz",
+  "description": "Een interactieve quiz over onvervreemdbare rechten en plichten. Leer meer over je fundamentele rechten en hoe deze beschermd worden.",
+  "image": "ipfs://QmTRJC6YVKUjafPtFWd9HcXPzF4uCuKB24mVmW8jNikQhT",
+  "attributes": [
+    {
+      "trait_type": "Type",
+      "value": "Educatief"
+    },
+    {
+      "trait_type": "Categorie",
+      "value": "Rechten"
+    },
+    {
+      "trait_type": "Niveau",
+      "value": "Beginner"
+    },
+    {
+      "trait_type": "Aantal Vragen",
+      "value": "7"
+    }
+  ],
+  "external_url": "https://onvervreemdbaar.nl",
+  "background_color": "#4a90e2"
+} 

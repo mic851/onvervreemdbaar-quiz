@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RechtenQuiz – Onvervreemdbaar</title>
+  <script src="https://cdn.jsdelivr.net/npm/stellar-sdk@11.0.0/dist/stellar-sdk.min.js"></script>
+  <script src="https://unpkg.com/@stellar/freighter-api@1.0.0/dist/freighter-api.min.js"></script>
+  <style>
+    :root {
+      --primary-color: #4a90e2;
+      --secondary-color: #2c3e50;
+      --background-color: #ffffff;
+      --text-color: #333333;
+      --border-color: #e0e0e0;
+      --success-color: #27ae60;
+      --error-color: #e74c3c;
+    }
+
+    [data-theme="dark"] {
+      --primary-color: #64b5f6;
+      --secondary-color: #34495e;
+      --background-color: #1a1a1a;
+      --text-color: #ffffff;
+      --border-color: #404040;
+      --success-color: #2ecc71;
+      --error-color: #c0392b;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: var(--background-color);
+      color: var(--text-color);
+      line-height: 1.6;
+      transition: background-color 0.3s, color 0.3s;
+    }
+
+    .title {
+      text-align: center;
+      font-size: 2.5em;
+      margin: 20px 0;
+      color: var(--primary-color);
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .nft-verification {
+      max-width: 800px;
+      margin: 20px auto;
+      padding: 30px;
+      background: linear-gradient(135deg, var(--background-color), #f5f5f5);
+      border-radius: 15px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .nft-verification::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 5px;
+      background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+    }
+
+    .nft-verification h2 {
+      color: var(--secondary-color);
+      margin-bottom: 20px;
+      font-size: 1.8em;
+    }
+
+    .wallet-connect {
+      text-align: center;
+      margin: 20px 0;
+    }
+
+    .wallet-connect button {
+      background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 25px;
+      font-size: 1.1em;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .wallet-connect button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    .nft-status {
+      text-align: center;
+      margin: 20px 0;
+      padding: 15px;
+      border-radius: 10px;
+      background-color: rgba(0, 0, 0, 0.05);
+    }
+
+    .nft-status.verified {
+      background-color: var(--success-color);
+      color: white;
+    }
+
+    .nft-status.error {
+      background-color: var(--error-color);
+      color: white;
+    }
+
+    .nft-info {
+      margin-top: 20px;
+      padding: 15px;
+      background-color: rgba(0, 0, 0, 0.05);
+      border-radius: 10px;
+    }
+
+    .nft-info code {
+      background-color: rgba(0, 0, 0, 0.1);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: monospace;
+    }
+
+    .quiz-container {
+      max-width: 800px;
+      margin: 20px auto;
+      padding: 20px;
+      background-color: var(--background-color);
+      border-radius: 15px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .quiz-container.hidden {
+      display: none;
+    }
+
+    .progress-bar {
+      width: 100%;
+      height: 10px;
+      background-color: var(--border-color);
+      border-radius: 5px;
+      margin-bottom: 20px;
+      overflow: hidden;
+    }
+
+    .progress {
+      width: 0%;
+      height: 100%;
+      background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+      transition: width 0.3s ease;
+    }
+
+    .chat-box {
+      height: 400px;
+      overflow-y: auto;
+      padding: 20px;
+      background-color: rgba(0, 0, 0, 0.05);
+      border-radius: 10px;
+      margin-bottom: 20px;
+    }
+
+    .message {
+      margin-bottom: 15px;
+      padding: 10px 15px;
+      border-radius: 10px;
+      max-width: 80%;
+    }
+
+    .bot-message {
+      background-color: var(--primary-color);
+      color: white;
+      margin-right: auto;
+    }
+
+    .user-message {
+      background-color: var(--secondary-color);
+      color: white;
+      margin-left: auto;
+    }
+
+    .options {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .options button {
+      background-color: var(--primary-color);
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 20px;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .options button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    .footer {
+      text-align: center;
+      padding: 20px;
+      margin-top: 40px;
+      border-top: 1px solid var(--border-color);
+    }
+
+    .footer a {
+      color: var(--primary-color);
+      text-decoration: none;
+      margin: 0 10px;
+    }
+
+    .footer a:hover {
+      text-decoration: underline;
+    }
+
+    .theme-button, .scroll-top-button {
+      position: fixed;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 20px;
+      cursor: pointer;
+      background-color: var(--primary-color);
+      color: white;
+      z-index: 1000;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .theme-button {
+      top: 20px;
+      right: 20px;
+    }
+
+    .scroll-top-button {
+      bottom: 20px;
+      right: 20px;
+    }
+
+    .theme-button:hover, .scroll-top-button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    @media (max-width: 768px) {
+      .title {
+        font-size: 2em;
+      }
+
+      .nft-verification, .quiz-container {
+        margin: 10px;
+        padding: 15px;
+      }
+
+      .chat-box {
+        height: 300px;
+      }
+
+      .message {
+        max-width: 90%;
+      }
+
+      .options button {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <button class="theme-button" id="themeButton" onclick="toggleTheme()">Donkere modus</button>
+  <button class="scroll-top-button" id="scroll-top-button" onclick="scrollToTop()">↑ Terug naar boven</button>
+  
+  <div class="title">RechtenQuiz – Onvervreemdbaar</div>
+  
+  <!-- NFT Verificatie Sectie -->
+  <div id="nft-verification" class="nft-verification">
+    <h2>NFT Verificatie</h2>
+    <div class="wallet-connect">
+      <button id="connectWallet">Connect Wallet</button>
+    </div>
+    <div class="nft-status">
+      <p>Status: <span id="nft-status">Niet geverifieerd</span></p>
+    </div>
+    <div class="nft-info">
+      <p>Contract ID: <code>CD63APFEC5CEZ7UXHYQJH6JMB7ZE4OC5E4Q3UNRMQI2FXY6QWVHB376G</code></p>
+      <p>Symbol: RECHTSQUIZ</p>
+    </div>
+  </div>
+
+  <!-- Quiz Container -->
+  <div id="quiz-container" class="quiz-container hidden">
+    <div class="progress-bar">
+      <div class="progress" id="progress"></div>
+    </div>
+    <div class="chat-box" id="chatBox">
+      <div class="message bot-message">Hoi! Ik ben je rechten-bot. Weet jij wat "onschuldig tot schuldig bewezen" betekent? Laten we het testen! 😊</div>
+      <div class="message bot-message">Vraag 1 van 7: Stel, je wordt beschuldigd van diefstal, maar er is geen bewijs. Ben je schuldig?</div>
+    </div>
+    <div class="options" id="options">
+      <button onclick="answer(0, 'Ja')">Ja</button>
+      <button onclick="answer(0, 'Nee')">Nee</button>
+    </div>
+  </div>
+
+  <div class="footer">
+    <a href="#" onclick="showPrivacyPolicy()">Privacybeleid</a> |
+    <a href="#" onclick="showTerms()">Algemene voorwaarden</a>
+  </div>
+
+  <script>
+    // Quiz vragen
+    const questions = [
+      {
+        question: "Wat is een onvervreemdbaar recht?",
+        options: ["Een recht dat je kunt verkopen", "Een recht dat je niet kunt overdragen of afstaan"],
+        correct: 1,
+        explanation: "Onvervreemdbare rechten zijn fundamentele rechten die je niet kunt overdragen of afstaan, zoals het recht op leven en persoonlijke vrijheid."
+      },
+      {
+        question: "Welk van deze rechten is onvervreemdbaar?",
+        options: ["Het recht op eigendom", "Het recht op leven"],
+        correct: 1,
+        explanation: "Het recht op leven is een onvervreemdbaar recht. Je kunt dit recht niet overdragen of afstaan aan iemand anders."
+      },
+      {
+        question: "Wat is het verschil tussen een recht en een plicht?",
+        options: ["Er is geen verschil", "Een recht is wat je mag, een plicht is wat je moet"],
+        correct: 1,
+        explanation: "Een recht is iets wat je mag doen of krijgen, terwijl een plicht iets is wat je moet doen. Ze zijn vaak met elkaar verbonden."
+      },
+      {
+        question: "Is het recht op onderwijs onvervreemdbaar?",
+        options: ["Ja, onderwijs is een fundamenteel recht", "Nee, je kunt het recht op onderwijs afstaan"],
+        correct: 0,
+        explanation: "Het recht op onderwijs is een onvervreemdbaar recht. Iedereen heeft recht op onderwijs, ongeacht hun situatie."
+      },
+      {
+        question: "Wat gebeurt er als je een onvervreemdbaar recht probeert over te dragen?",
+        options: ["Het is legaal", "Het is nietig (heeft geen rechtsgevolg)"],
+        correct: 1,
+        explanation: "Als je probeert een onvervreemdbaar recht over te dragen, is deze overdracht nietig. Het recht blijft bij de oorspronkelijke eigenaar."
+      },
+      {
+        question: "Welke van deze is een plicht die hoort bij onvervreemdbare rechten?",
+        options: ["De plicht om te werken", "De plicht om de rechten van anderen te respecteren"],
+        correct: 1,
+        explanation: "Bij onvervreemdbare rechten horen ook plichten, zoals het respecteren van de rechten van anderen."
+      },
+      {
+        question: "Kan een onvervreemdbaar recht worden ingetrokken door de overheid?",
+        options: ["Ja, altijd", "Nee, alleen in zeer uitzonderlijke omstandigheden"],
+        correct: 1,
+        explanation: "Onvervreemdbare rechten kunnen alleen in zeer uitzonderlijke omstandigheden worden ingetrokken, en alleen via een wettelijk vastgelegd proces."
+      }
+    ];
+
+    let currentQuestion = 0;
+    let score = 0;
+    let isDarkMode = false;
+
+    // NFT Verificatie
+    class WalletVerification {
+      constructor() {
+        this.contractId = 'CD63APFEC5CEZ7UXHYQJH6JMB7ZE4OC5E4Q3UNRMQI2FXY6QWVHB376G';
+        this.server = new StellarSdk.Server('https://soroban-testnet.stellar.org:443');
+      }
+
+      async checkNFTOwnership(address) {
+        try {
+          const contract = new StellarSdk.Contract(this.contractId);
+          const result = await contract.balance({ id: address });
+          return result > 0;
+        } catch (error) {
+          console.error('Error checking NFT ownership:', error);
+          return false;
+        }
+      }
+
+      async verifyAccess() {
+        const statusElement = document.getElementById('nft-status');
+        const connectButton = document.getElementById('connectWallet');
+        
+        try {
+          // Controleer of Freighter beschikbaar is
+          if (!window.freighterApi) {
+            statusElement.textContent = 'Freighter wallet niet gevonden. Installeer eerst Freighter.';
+            statusElement.classList.add('error');
+            connectButton.disabled = true;
+            return;
+          }
+
+          // Toon dat we verbinding maken
+          statusElement.textContent = 'Verbinden met wallet...';
+          statusElement.classList.remove('error', 'verified');
+
+          // Vraag om wallet connectie
+          const publicKey = await window.freighterApi.getPublicKey();
+          console.log('Connected wallet:', publicKey);
+          
+          // Controleer NFT bezit
+          const hasNFT = await this.checkNFTOwnership(publicKey);
+          console.log('Has NFT:', hasNFT);
+
+          if (hasNFT) {
+            statusElement.textContent = 'Geverifieerd';
+            statusElement.classList.add('verified');
+            document.getElementById('quiz-container').classList.remove('hidden');
+            startQuiz();
+          } else {
+            statusElement.textContent = 'Geen NFT gevonden in je wallet';
+            statusElement.classList.add('error');
+          }
+        } catch (error) {
+          console.error('Verificatie fout:', error);
+          statusElement.textContent = 'Fout bij verificatie: ' + error.message;
+          statusElement.classList.add('error');
+        }
+      }
+    }
+
+    // Quiz functionaliteit
+    function startQuiz() {
+      updateProgress();
+      showQuestion();
+    }
+
+    function updateProgress() {
+      const progress = ((currentQuestion + 1) / questions.length) * 100;
+      document.getElementById('progress').style.width = `${progress}%`;
+    }
+
+    function showQuestion() {
+      const question = questions[currentQuestion];
+      const chatBox = document.getElementById('chatBox');
+      const options = document.getElementById('options');
+
+      // Voeg vraag toe aan chat
+      chatBox.innerHTML += `
+        <div class="message bot-message">Vraag ${currentQuestion + 1} van ${questions.length}: ${question.question}</div>
+      `;
+
+      // Toon antwoordopties
+      options.innerHTML = question.options.map((option, index) => `
+        <button onclick="answer(${index}, '${option}')">${option}</button>
+      `).join('');
+
+      // Scroll naar beneden
+      chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    function answer(selectedIndex, answer) {
+      const question = questions[currentQuestion];
+      const chatBox = document.getElementById('chatBox');
+
+      // Voeg antwoord toe aan chat
+      chatBox.innerHTML += `
+        <div class="message user-message">${answer}</div>
+      `;
+
+      // Controleer antwoord
+      if (selectedIndex === question.correct) {
+        score++;
+        chatBox.innerHTML += `
+          <div class="message bot-message">Correct! ${question.explanation}</div>
+        `;
+      } else {
+        chatBox.innerHTML += `
+          <div class="message bot-message">Helaas, dat is niet correct. ${question.explanation}</div>
+        `;
+      }
+
+      // Scroll naar beneden
+      chatBox.scrollTop = chatBox.scrollHeight;
+
+      // Ga naar volgende vraag
+      currentQuestion++;
+      if (currentQuestion < questions.length) {
+        setTimeout(() => {
+          updateProgress();
+          showQuestion();
+        }, 2000);
+      } else {
+        setTimeout(showResults, 2000);
+      }
+    }
+
+    function showResults() {
+      const chatBox = document.getElementById('chatBox');
+      const options = document.getElementById('options');
+      const percentage = (score / questions.length) * 100;
+
+      chatBox.innerHTML += `
+        <div class="message bot-message">
+          Quiz afgerond! Je score: ${score} van ${questions.length} (${percentage}%)
+          ${percentage >= 70 ? 'Gefeliciteerd! Je kent je onvervreemdbare rechten goed!' : 'Je kunt nog wat leren over je onvervreemdbare rechten. Hier zijn enkele bronnen om meer te leren:'}
+        </div>
+      `;
+
+      // Voeg verdiepende informatie toe
+      chatBox.innerHTML += `
+        <div class="message bot-message">
+          <h3>Meer leren over onvervreemdbare rechten:</h3>
+          <ul>
+            <li><a href="https://www.mensenrechten.nl/onvervreemdbare-rechten" target="_blank">College voor de Rechten van de Mens</a></li>
+            <li><a href="https://www.un.org/en/about-us/universal-declaration-of-human-rights" target="_blank">Universele Verklaring van de Rechten van de Mens</a></li>
+            <li><a href="https://www.rijksoverheid.nl/onderwerpen/grondwet" target="_blank">Nederlandse Grondwet</a></li>
+          </ul>
+        </div>
+      `;
+
+      options.innerHTML = `
+        <button onclick="resetQuiz()">Opnieuw proberen</button>
+        <button onclick="shareResults()">Deel je resultaten</button>
+      `;
+    }
+
+    function shareResults() {
+      const percentage = (score / questions.length) * 100;
+      const text = `Ik heb de Onvervreemdbare Rechten Quiz gedaan en scoorde ${percentage}%! Test je kennis op: `;
+      const url = window.location.href;
+      
+      if (navigator.share) {
+        navigator.share({
+          title: 'Onvervreemdbare Rechten Quiz',
+          text: text,
+          url: url
+        }).catch(console.error);
+      } else {
+        // Fallback voor browsers die Web Share API niet ondersteunen
+        const shareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`;
+        window.open(shareUrl, '_blank');
+      }
+    }
+
+    function resetQuiz() {
+      currentQuestion = 0;
+      score = 0;
+      document.getElementById('progress').style.width = '0%';
+      document.getElementById('chatBox').innerHTML = `
+        <div class="message bot-message">Hoi! Ik ben je rechten-bot. Weet jij wat "onschuldig tot schuldig bewezen" betekent? Laten we het testen! 😊</div>
+      `;
+      showQuestion();
+    }
+
+    // UI functionaliteit
+    function toggleTheme() {
+      const body = document.body;
+      const themeButton = document.getElementById('themeButton');
+      
+      if (isDarkMode) {
+        body.removeAttribute('data-theme');
+        themeButton.textContent = 'Donkere modus';
+      } else {
+        body.setAttribute('data-theme', 'dark');
+        themeButton.textContent = 'Lichte modus';
+      }
+      
+      isDarkMode = !isDarkMode;
+    }
+
+    function scrollToTop() {
+      window.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+      });
+    }
+
+    function showPrivacyPolicy() {
+      alert('Privacybeleid: We verzamelen geen persoonlijke gegevens. Je antwoorden worden alleen gebruikt om je score te berekenen.');
+    }
+
+    function showTerms() {
+      alert('Algemene voorwaarden: Deze quiz is alleen voor educatieve doeleinden. De informatie is niet juridisch bindend.');
+    }
+
+    // Initialisatie
+    document.addEventListener('DOMContentLoaded', () => {
+      const walletVerification = new WalletVerification();
+      const connectButton = document.getElementById('connectWallet');
+      
+      // Controleer of Freighter beschikbaar is bij het laden
+      if (!window.freighterApi) {
+        connectButton.disabled = true;
+        document.getElementById('nft-status').textContent = 'Installeer eerst Freighter wallet';
+        document.getElementById('nft-status').classList.add('error');
+      }
+
+      connectButton.addEventListener('click', async () => {
+        try {
+          // Vraag expliciet om connectie
+          await window.freighterApi.connect();
+          await walletVerification.verifyAccess();
+        } catch (error) {
+          console.error('Connectie fout:', error);
+          document.getElementById('nft-status').textContent = 'Fout bij verbinden: ' + error.message;
+          document.getElementById('nft-status').classList.add('error');
+        }
+      });
+    });
+  </script>
+</body>
+</html> 
