@@ -389,13 +389,15 @@
     class WalletVerification {
       constructor() {
         this.contractId = 'CD63APFEC5CEZ7UXHYQJH6JMB7ZE4OC5E4Q3UNRMQI2FXY6QWVHB376G';
-        this.server = new StellarSdk.Server('https://soroban-testnet.stellar.org:443');
+        this.server = new StellarSdk.Server('https://soroban-testnet.stellar.org');
       }
 
       async checkNFTOwnership(address) {
         try {
+          console.log('Checking NFT ownership for address:', address);
           const contract = new StellarSdk.Contract(this.contractId);
           const result = await contract.balance({ id: address });
+          console.log('NFT balance result:', result);
           return result > 0;
         } catch (error) {
           console.error('Error checking NFT ownership:', error);
