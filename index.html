@@ -585,20 +585,30 @@
 
     // Initialisatie
     document.addEventListener('DOMContentLoaded', () => {
+      console.log('DOM loaded, initializing...');
       const walletVerification = new WalletVerification();
       const connectButton = document.getElementById('connectWallet');
       
       // Controleer of Freighter beschikbaar is bij het laden
+      console.log('Checking for Freighter wallet...');
+      console.log('window.freighterApi:', window.freighterApi);
+      
       if (!window.freighterApi) {
+        console.log('Freighter wallet not found');
         connectButton.disabled = true;
         document.getElementById('nft-status').textContent = 'Installeer eerst Freighter wallet';
         document.getElementById('nft-status').classList.add('error');
+      } else {
+        console.log('Freighter wallet found');
       }
 
       connectButton.addEventListener('click', async () => {
+        console.log('Connect button clicked');
         try {
+          console.log('Attempting to connect to Freighter...');
           // Vraag expliciet om connectie
           await window.freighterApi.connect();
+          console.log('Successfully connected to Freighter');
           await walletVerification.verifyAccess();
         } catch (error) {
           console.error('Connectie fout:', error);
