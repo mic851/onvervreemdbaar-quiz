@@ -5,7 +5,24 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>RechtenQuiz – Onvervreemdbaar</title>
   <script src="https://cdn.jsdelivr.net/npm/stellar-sdk@11.0.0/dist/stellar-sdk.min.js"></script>
-  <script src="https://unpkg.com/@stellar/freighter-api@1.0.0/dist/freighter-api.min.js"></script>
+  <script>
+    // Wacht op Freighter API
+    window.addEventListener('load', function() {
+      if (window.freighterApi) {
+        console.log('Freighter API gevonden');
+      } else {
+        console.log('Wachten op Freighter API...');
+        // Probeer opnieuw na 1 seconde
+        setTimeout(function() {
+          if (window.freighterApi) {
+            console.log('Freighter API gevonden na wachten');
+          } else {
+            console.log('Freighter API niet gevonden');
+          }
+        }, 1000);
+      }
+    });
+  </script>
   <style>
     :root {
       --primary-color: #4a90e2;
@@ -591,24 +608,24 @@
       
       // Controleer of Freighter beschikbaar is bij het laden
       console.log('Checking for Freighter wallet...');
-      console.log('window.freighterApi:', window.freighterApi);
       
-      if (!window.freighterApi) {
-        console.log('Freighter wallet not found');
-        connectButton.disabled = true;
-        document.getElementById('nft-status').textContent = 'Installeer eerst Freighter wallet';
-        document.getElementById('nft-status').classList.add('error');
-      } else {
-        console.log('Freighter wallet found');
-      }
+      // Wacht op Freighter API
+      const checkFreighter = setInterval(() => {
+        if (window.freighterApi) {
+          console.log('Freighter wallet found');
+          clearInterval(checkFreighter);
+          connectButton.disabled = false;
+          document.getElementById('nft-status').textContent = 'Klik op Connect Wallet om te beginnen';
+        }
+      }, 1000);
 
       connectButton.addEventListener('click', async () => {
         console.log('Connect button clicked');
         try {
           console.log('Attempting to connect to Freighter...');
           // Vraag expliciet om connectie
-          await window.freighterApi.connect();
-          console.log('Successfully connected to Freighter');
+          const publicKey = await window.freighterApi.getPublicKey();
+          console.log('Successfully connected to Freighter with public key:', publicKey);
           await walletVerification.verifyAccess();
         } catch (error) {
           console.error('Connectie fout:', error);
